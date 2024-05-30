@@ -24,7 +24,7 @@ python3 -m venv venv
 
 ### 1.5 Активировать среду
 ```text
-source test/test_env/bin/activate
+source venv/bin/activate
 ```
 
 ## 2. Настройка базы данных
@@ -69,9 +69,41 @@ DB_USER=gameclubadmin
 DB_PASS=your_password
 ```
 
-## 3. Настройка backend-приложения
+## 3. Настройка миграций
 
-### 3.1 Установка uvicorn
+### 3.1 Установка alembic 
+```text
+pip install alembic
+```
+
+### 3.2 Применение всех миграций
+```text
+alembic upgrade head
+```
+
+### 3.3 Проверить наличие созданных таблиц
+Для этого нужно войти в редактор psql и ввести команду: 
+```text
+\dt
+```
+Вывод должен быть: 
+```text
+                List of relations
+ Schema |      Name       | Type  |     Owner
+--------+-----------------+-------+---------------
+ public | alembic_version | table | gameclubadmin
+ public | pc_station      | table | gameclubadmin
+ public | ps_station      | table | gameclubadmin
+ public | reservation     | table | gameclubadmin
+ public | role            | table | gameclubadmin
+ public | user            | table | gameclubadmin
+ public | vr_station      | table | gameclubadmin
+(7 rows)
+```
+
+## 4. Настройка backend-приложения
+
+### 4.1 Установка uvicorn
 ```text
 sudo apt install uvicorn
 ```
