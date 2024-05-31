@@ -1,5 +1,5 @@
 from typing import Optional
-from fastapi import Depends, Request
+from fastapi import Request
 from fastapi_users import BaseUserManager, IntegerIDMixin, exceptions, models, schemas
 from celery import Celery
 from smtplib import SMTP_SSL
@@ -18,6 +18,9 @@ def get_email_template_dashboard(
         token: str,
         subject: str
 ) -> EmailMessage:
+    """
+    Returns an email template for verification email
+    """
     email = EmailMessage()
     email['Subject'] = subject
     email['From'] = SMTP_USER
@@ -39,6 +42,9 @@ def send_email(
         token: str,
         subject: str
 ) -> None:
+    """
+    Sends an email to user email
+    """
     email = get_email_template_dashboard(username, user_email, token, subject)
     with SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
         server.login(SMTP_USER, SMTP_PASS)
@@ -49,15 +55,15 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     reset_password_token_secret = USER_MANAGER_SECRET
     verification_token_secret = USER_MANAGER_SECRET
 
-    async def on_after_register(self, user: User, request: Optional[Request] = None) -> None:
-        print(f"User {user.id} has registered.")
-
     async def create(
             self,
             user_create: schemas.UC,
             safe: bool = False,
             request: Optional[Request] = None,
     ) -> models.UP:
+        """
+        Creates a new user in the database
+        """
         await self.validate_password(user_create.password, user_create)
 
         existing_user = await self.user_db.get_by_email(user_create.email)
@@ -85,6 +91,9 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
             token: str,
             request: Optional[Request] = None
     ) -> None:
+        """
+        Sends a verification email to the user to verify user`s email
+        """
         send_email.delay(user.username, user.email, token, "Подтверждение аккаунта")
         print(user.id, token)
 
@@ -94,6 +103,9 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
             token: str,
             request: Optional[Request] = None
     ) -> None:
+        """
+        Sends a verification email to the user to verify reset password
+        """
         send_email.delay(user.username, user.email, token, "Восстановление пароля")
 
 
