@@ -5,14 +5,13 @@ from celery import Celery
 from smtplib import SMTP_SSL
 from email.message import EmailMessage
 
-from backend.src.auth.models import User
+from backend.src.users.models import User
 from backend.src.config import SMTP_USER, SMTP_HOST, SMTP_PASS, SMTP_PORT, CELERY_BROKER_URL, USER_MANAGER_SECRET
 
-celery_app = Celery("auth", broker_url=CELERY_BROKER_URL)
-# celery -A backend.src.auth.manager:celery_app worker --loglevel=INFO --pool=solo
+celery_app = Celery("users", broker_url=CELERY_BROKER_URL)
 
 
-def get_email_template_dashboard(
+def get_email(
         username: str,
         user_email: str,
         token: str,
@@ -45,7 +44,7 @@ def send_email(
     """
     Sends an email to user email
     """
-    email = get_email_template_dashboard(username, user_email, token, subject)
+    email = get_email(username, user_email, token, subject)
     with SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
         server.login(SMTP_USER, SMTP_PASS)
         server.send_message(email)

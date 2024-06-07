@@ -1,4 +1,4 @@
-"""Added models for pc, vr, ps, auth, reservations
+"""Added models for pc, vr, ps, users, reservations
 
 Revision ID: d1ac0b8e13ca
 Revises: 

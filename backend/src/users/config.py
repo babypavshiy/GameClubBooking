@@ -4,8 +4,8 @@ from backend.src.database import get_async_session
 from fastapi import Depends
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.src.auth.models import User
-from backend.src.auth.manager import UserManager
+from backend.src.users.models import User
+from backend.src.users.manager import UserManager
 from backend.src.config import JWT_SECRET
 
 cookie_transport = CookieTransport(
@@ -41,7 +41,3 @@ fastapi_users = FastAPIUsers[User, int](
     [auth_backend],
 )
 
-current_user = fastapi_users.current_user()
-current_active_user = fastapi_users.current_user(active=True)
-current_verified_user = fastapi_users.current_user(verified=True)
-current_superuser = fastapi_users.current_user(superuser=True)

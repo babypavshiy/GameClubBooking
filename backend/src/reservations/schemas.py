@@ -11,15 +11,13 @@ class ReservationCreate(BaseModel):
     date: d = d.today()
     start_time: dt = dt.now()
     end_time: dt = dt.now()
-    created_at: dt = dt.now()
 
 
 class ReservationUpdate(BaseModel):
-    station_id: int | None = None
+    station_id: Optional[int] = None
     status: int = 0
-    user_id: int | None = None
-    staff_id: int | None = None
-    date: d | None = d.today()
-    start_time: dt | None = dt.now()
-    end_time: dt | None = dt.now()
-    created_at: dt | None = dt.now()
+    user_id: Optional[int] = None
+    staff_id: Optional[int] = None
+    date: Optional[d] = d.today()
+    start_time: Optional[dt] = dt.now()
+    end_time: Optional[dt] = dt.now()

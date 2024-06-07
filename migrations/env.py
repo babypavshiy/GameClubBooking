@@ -5,11 +5,10 @@ from sqlalchemy import pool
 
 from alembic import context
 from backend.src.config import DB_USER, DB_NAME,DB_PASS, DB_PORT, DB_HOST
-from backend.src.auth.models import metadata as auth_metadata
-from backend.src.pc.models import metadata as pc_metadata
-from backend.src.ps.models import metadata as ps_metadata
-from backend.src.vr.models import metadata as vr_metadata
+from backend.src.users.models import metadata as auth_metadata
+from backend.src.stations.models import metadata as stations_metadata
 from backend.src.reservations.models import metadata as reservations_metadata
+from backend.src.reviews.models import metadata as reviews_metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -29,7 +28,12 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = [pc_metadata, ps_metadata, vr_metadata, reservations_metadata, auth_metadata]
+target_metadata = [
+    stations_metadata,
+    reservations_metadata,
+    auth_metadata,
+    reviews_metadata,
+]
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
