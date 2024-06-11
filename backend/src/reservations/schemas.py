@@ -8,6 +8,7 @@ class ReservationCreate(BaseModel):
     status: int = 0
     user_id: int
     staff_id: int
+    amount: float = 0.0
     date: d = d.today()
     start_time: dt = dt.now()
     end_time: dt = dt.now()
@@ -18,6 +19,7 @@ class ReservationUpdate(BaseModel):
     status: int = 0
     user_id: Optional[int] = None
     staff_id: Optional[int] = None
+    amount: float = 0.0
     date: Optional[d] = d.today()
     start_time: Optional[dt] = dt.now()
     end_time: Optional[dt] = dt.now()

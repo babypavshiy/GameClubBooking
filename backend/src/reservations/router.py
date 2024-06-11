@@ -6,9 +6,10 @@ from sqlalchemy import select, insert, update, delete, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.src.database import get_async_session
-from backend.src.stations.models import station
 from backend.src.reservations.models import reservation
+from backend.src.reservations.payments import create_payment
 from backend.src.reservations.schemas import ReservationCreate, ReservationUpdate
+from backend.src.stations.models import station
 from backend.src.users.models import user
 from backend.src.users.utils import current_verified_user, is_admin, is_staff
 
@@ -17,6 +18,7 @@ router = APIRouter(
     tags=["reservations"],
 )
 
+
 async def does_station_exist(station_id: int, session: AsyncSession) -> bool:
     """
     Checks if the given station exists
@@ -24,6 +26,7 @@ async def does_station_exist(station_id: int, session: AsyncSession) -> bool:
     query = select(station).where(station.c.id == station_id)
     result = await session.execute(query)
     return bool(result.mappings().all())
+
 
 async def is_time_slot_available(station_id: int, start_time: datetime, end_time: datetime,
                                  session: AsyncSession) -> bool:
@@ -40,6 +43,7 @@ async def is_time_slot_available(station_id: int, start_time: datetime, end_time
     result = await session.execute(query)
     return not result.mappings().all()
 
+
 @router.get("/")
 async def get_all_reservations(session: AsyncSession = Depends(get_async_session),
                                current_user: user = Depends(current_verified_user)) -> dict:
@@ -47,7 +51,7 @@ async def get_all_reservations(session: AsyncSession = Depends(get_async_session
     Get all reservations
     """
     try:
-        if is_admin(current_user.id, session) or is_staff(current_user.id, session):
+        if await is_admin(current_user.id, session) or await is_staff(current_user.id, session):
             query = select(reservation)
             result = await session.execute(query)
             data = [dict(row) for row in result.mappings().all()]
@@ -61,8 +65,10 @@ async def get_all_reservations(session: AsyncSession = Depends(get_async_session
             "data": str(e),
         }
 
+
 def get_date_object(date_str: str) -> datetime:
     return datetime.strptime(date_str, '%Y-%m-%d')
+
 
 def generate_all_slots(start_time: datetime, end_time: datetime) -> List[str]:
     all_slots = []
@@ -71,6 +77,7 @@ def generate_all_slots(start_time: datetime, end_time: datetime) -> List[str]:
         all_slots.append(current_time.time().strftime('%H:%M'))
         current_time += timedelta(hours=1)
     return all_slots
+
 
 def get_occupied_slots(reservations: List[Dict[str, datetime]]) -> Set[str]:
     occupied_slots = set()
@@ -84,6 +91,7 @@ def get_occupied_slots(reservations: List[Dict[str, datetime]]) -> Set[str]:
                 occupied_slots.add(current_time.time().strftime('%H:%M'))
             current_time += timedelta(hours=1)
     return occupied_slots
+
 
 async def get_available_slots(date: str, session: AsyncSession) -> List[str]:
     date_obj = get_date_object(date)
@@ -103,6 +111,7 @@ async def get_available_slots(date: str, session: AsyncSession) -> List[str]:
     available_slots = [slot for slot in all_slots if slot not in occupied_slots]
 
     return available_slots
+
 
 @router.get("/availability/")
 async def get_availability(
@@ -128,27 +137,39 @@ async def create_reservation(new_reservation: ReservationCreate,
     """
     Create a new reservation
     """
-    try:
-        new_reservation.created_at = datetime.utcnow()
+    # try:
+    new_reservation_dict = new_reservation.dict()
+    new_reservation_dict["created_at"] = datetime.utcnow()
+    if not await does_station_exist(new_reservation_dict["station_id"], session):
+        raise HTTPException(status_code=400, detail="Station with this ID does not exist")
+    if not await is_time_slot_available(new_reservation_dict["station_id"], new_reservation_dict["start_time"],
+                                        new_reservation_dict["end_time"], session):
+        raise HTTPException(status_code=400, detail="Time slot is not available")
+    stmt = insert(reservation).values(new_reservation_dict)
+    inserted_data = await session.execute(stmt)
+    await session.commit()
 
-        new_reservation_dict = new_reservation.dict()
-        if not await does_station_exist(new_reservation_dict["station_id"], session):
-            raise HTTPException(status_code=400, detail="Station with this ID does not exist")
-        if not await is_time_slot_available(new_reservation_dict["station_id"], new_reservation_dict["start_time"],
-                                            new_reservation_dict["end_time"], session):
-            raise HTTPException(status_code=400, detail="Time slot is not available")
-        stmt = insert(reservation).values(new_reservation_dict)
-        await session.execute(stmt)
-        await session.commit()
-        return {
-            "status": "ok",
-            "data": new_reservation_dict,
-        }
-    except Exception as e:
-        return {
-            "status": "error",
-            "data": str(e),
-        }
+    payment_url = ""
+    if new_reservation.amount != 0:
+        print(1)
+        payment_url = await create_payment(new_reservation_dict["amount"],
+                             new_reservation_dict["user_id"],
+                            inserted_data.inserted_primary_key[0],
+                                           session)
+
+    return {
+        "status": "ok",
+        "data": {
+            "inserted_data": new_reservation_dict,
+            "payment_url": payment_url
+        },
+    }
+    # except Exception as e:
+    #     return {
+    #         "status": "error",
+    #         "data": str(e),
+    #     }
+
 
 @router.get("/{reservation_id}")
 async def get_reservation(reservation_id: int, session: AsyncSession = Depends(get_async_session)) -> dict:
@@ -208,6 +229,7 @@ async def update_reservation(reservation_id: int, updated_reservation: Reservati
             "data": str(e),
         }
 
+
 @router.delete("/{reservation_id}")
 async def delete_reservation(reservation_id: int, session: AsyncSession = Depends(get_async_session)) -> dict:
     """
@@ -232,4 +254,3 @@ async def delete_reservation(reservation_id: int, session: AsyncSession = Depend
             "status": "error",
             "data": str(e),
         }
-

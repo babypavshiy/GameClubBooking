@@ -22,7 +22,7 @@ async def create_station(station_create: StationCreate,
     Create a new station
     """
     try:
-        if is_admin(current_user.id, session) or is_staff(current_user.id, session):
+        if await is_admin(current_user.id, session) or await is_staff(current_user.id, session):
             stmt = insert(station).values(**station_create.dict())
             await session.execute(stmt)
             await session.commit()

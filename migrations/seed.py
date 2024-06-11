@@ -1,5 +1,5 @@
 from sqlalchemy import insert
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
 from backend.src.database import DATABASE_URL
 from backend.src.users.models import role
