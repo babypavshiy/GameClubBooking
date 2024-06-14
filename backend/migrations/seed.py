@@ -1,8 +1,8 @@
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 
-from backend.src.database import DATABASE_URL
-from backend.src.users.models import role
+from src.database import DATABASE_URL
+from src.users.models import role
 
 data = [
     {"id": 0,

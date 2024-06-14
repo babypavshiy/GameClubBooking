@@ -4,11 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.src.database import get_async_session
-from backend.src.reviews.models import review
-from backend.src.reviews.schemas import ReviewCreate, ReviewUpdate
-from backend.src.users.models import User
-from backend.src.users.utils import current_verified_user
+from src.database import get_async_session
+from src.reviews.models import review
+from src.reviews.schemas import ReviewCreate, ReviewUpdate
+from src.users.models import User
+from src.users.utils import current_verified_user
 
 router = APIRouter(
     prefix="/reviews",
@@ -35,6 +35,21 @@ async def get_review(review_id: int, session: AsyncSession = Depends(get_async_s
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/by_station/{station_id}")
+async def get_reviews_by_station(station_id: int, session: AsyncSession = Depends(get_async_session)) -> dict:
+    try:
+        query = select(review).where(review.c.station_id == station_id)
+        result = await session.execute(query)
+        data = result.mappings().all()
+        if not data:
+            raise HTTPException(status_code=404, detail="Reviews not found")
+        return {
+            "status": "ok",
+            "data": [dict(d) for d in data],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/", response_model=ReviewCreate)
 async def create_review(review_create: ReviewCreate,
                         current_user: User = Depends(current_verified_user),
@@ -44,6 +59,7 @@ async def create_review(review_create: ReviewCreate,
     """
     try:
         review_data = review_create.dict()
+        review_data["rating"] = int(review_data["rating"])
         review_data["user_id"] = current_user.id
         review_data["created_at"] = datetime.utcnow()
         stmt = insert(review).values(**review_data)

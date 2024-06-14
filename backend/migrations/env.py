@@ -4,11 +4,11 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
-from backend.src.config import DB_USER, DB_NAME,DB_PASS, DB_PORT, DB_HOST
-from backend.src.users.models import metadata as auth_metadata
-from backend.src.stations.models import metadata as stations_metadata
-from backend.src.reservations.models import metadata as reservations_metadata
-from backend.src.reviews.models import metadata as reviews_metadata
+from src.config import DB_USER, DB_NAME,DB_PASS, DB_PORT, DB_HOST
+from src.users.models import metadata as auth_metadata
+from src.stations.models import metadata as stations_metadata
+from src.reservations.models import metadata as reservations_metadata
+from src.reviews.models import metadata as reviews_metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

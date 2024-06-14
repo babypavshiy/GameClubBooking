@@ -1,17 +1,22 @@
 from fastapi_users.authentication import CookieTransport, JWTStrategy, AuthenticationBackend
 from fastapi_users import FastAPIUsers
-from backend.src.database import get_async_session
+from src.database import get_async_session
 from fastapi import Depends
 from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 from sqlalchemy.ext.asyncio import AsyncSession
-from backend.src.users.models import User
-from backend.src.users.manager import UserManager
-from backend.src.config import JWT_SECRET
+from src.users.models import User
+from src.users.manager import UserManager
+from src.config import JWT_SECRET
 
 cookie_transport = CookieTransport(
     cookie_name="auth_token",
     cookie_max_age=3600,
+    cookie_path="/",
+    cookie_httponly=True,
+    cookie_secure=False,
+    cookie_samesite="lax",
 )
+
 
 
 def get_jwt_strategy() -> JWTStrategy:

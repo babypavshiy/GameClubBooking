@@ -1,0 +1,41 @@
+version: '3'
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        - --no-cache=true
+    ports:
+      - "3000:3000"
+
+  celery:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: celery
+    working_dir: /gameclubbooking
+    volumes:
+      - ./backend:/TochkaBookingProject
+    command: celery -A src.users.manager:celery_app worker --loglevel=info
+    env_file:
+      - .env
+
+  nginx:
+    image: nginx:1.24.0
+    ports:
+      - "80:80"
+#      - "443:443"
+    volumes:
+      - ./nginx/dev.nginx.conf:/etc/nginx/nginx.conf:ro
+      - /ssl:/ssl:ro
+    restart: unless-stopped

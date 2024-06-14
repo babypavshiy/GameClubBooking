@@ -6,8 +6,8 @@ from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from yookassa import Payment, Configuration
 
-from backend.src.config import PAYMENTS_SECRET_KEY, PAYMENTS_ACCOUNT
-from backend.src.reservations.models import payment
+from src.config import PAYMENTS_SECRET_KEY, PAYMENTS_ACCOUNT
+from src.reservations.models import payment
 
 Configuration.account_id = PAYMENTS_ACCOUNT
 Configuration.secret_key = PAYMENTS_SECRET_KEY

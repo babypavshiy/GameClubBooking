@@ -8,9 +8,6 @@ Create Date: 2024-06-05 16:33:07.295879
 from typing import Sequence, Union
 from migrations.seed import seed_data
 import asyncio
-from alembic import op
-import sqlalchemy as sa
-
 
 # revision identifiers, used by Alembic.
 revision: str = 'eac8e72faf91'

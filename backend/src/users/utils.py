@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from backend.src.users.models import user
-from backend.src.users.config import fastapi_users
+from src.users.models import user
+from src.users.config import fastapi_users
 
 current_user = fastapi_users.current_user()
 current_active_user = fastapi_users.current_user(active=True)

@@ -5,14 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, insert, update, delete, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.src.database import get_async_session
-from backend.src.reservations.models import reservation
-from backend.src.reservations.payments import create_payment
-from backend.src.reservations.schemas import ReservationCreate, ReservationUpdate
-from backend.src.stations.models import station
-from backend.src.users.models import user
-from backend.src.users.utils import current_verified_user, is_admin, is_staff
-
+from src.database import get_async_session
+from src.reservations.models import reservation, payment
+from src.reservations.payments import create_payment
+from src.reservations.schemas import ReservationCreate, ReservationUpdate
+from src.stations.models import station
+from src.users.models import user
+from src.users.utils import current_verified_user, is_admin, is_staff
 router = APIRouter(
     prefix="/reservations",
     tags=["reservations"],
@@ -53,6 +52,27 @@ async def get_all_reservations(session: AsyncSession = Depends(get_async_session
     try:
         if await is_admin(current_user.id, session) or await is_staff(current_user.id, session):
             query = select(reservation)
+            result = await session.execute(query)
+            data = [dict(row) for row in result.mappings().all()]
+            return {
+                "status": "ok",
+                "data": data,
+            }
+    except Exception as e:
+        return {
+            "status": "error",
+            "data": str(e),
+        }
+
+@router.get("/my")
+async def get_my_reservations(session: AsyncSession = Depends(get_async_session),
+                               current_user: user = Depends(current_verified_user)) -> dict:
+    """
+    Get all reservations
+    """
+    try:
+        if await is_admin(current_user.id, session) or await is_staff(current_user.id, session):
+            query = select(reservation).where(reservation.c.user_id == current_user.id)
             result = await session.execute(query)
             data = [dict(row) for row in result.mappings().all()]
             return {
@@ -133,42 +153,46 @@ async def get_availability(
 
 @router.post("/")
 async def create_reservation(new_reservation: ReservationCreate,
+                             current_user: user  = Depends(current_verified_user),
                              session: AsyncSession = Depends(get_async_session)) -> dict:
     """
     Create a new reservation
     """
-    # try:
-    new_reservation_dict = new_reservation.dict()
-    new_reservation_dict["created_at"] = datetime.utcnow()
-    if not await does_station_exist(new_reservation_dict["station_id"], session):
-        raise HTTPException(status_code=400, detail="Station with this ID does not exist")
-    if not await is_time_slot_available(new_reservation_dict["station_id"], new_reservation_dict["start_time"],
-                                        new_reservation_dict["end_time"], session):
-        raise HTTPException(status_code=400, detail="Time slot is not available")
-    stmt = insert(reservation).values(new_reservation_dict)
-    inserted_data = await session.execute(stmt)
-    await session.commit()
+    try:
+        new_reservation_dict = new_reservation.dict()
+        new_reservation_dict["amount"] = 100
+        new_reservation_dict["user_id"]  =  current_user.id
+        new_reservation_dict["staff_id"] = current_user.id
+        new_reservation_dict["end_time"] = new_reservation_dict["start_time"] + timedelta(hours=1)
+        new_reservation_dict["created_at"] = datetime.utcnow()
+        if not await does_station_exist(new_reservation_dict["station_id"], session):
+            raise HTTPException(status_code=400, detail="Station with this ID does not exist")
+        if not await is_time_slot_available(new_reservation_dict["station_id"], new_reservation_dict["start_time"],
+                                            new_reservation_dict["end_time"], session):
+            raise HTTPException(status_code=400, detail="Time slot is not available")
+        stmt = insert(reservation).values(new_reservation_dict)
+        inserted_data = await session.execute(stmt)
+        await session.commit()
 
-    payment_url = ""
-    if new_reservation.amount != 0:
-        print(1)
-        payment_url = await create_payment(new_reservation_dict["amount"],
-                             new_reservation_dict["user_id"],
-                            inserted_data.inserted_primary_key[0],
-                                           session)
+        payment_url = ""
+        if new_reservation_dict["amount"]  > 0:
+            payment_url = await create_payment(new_reservation_dict["amount"],
+                                 new_reservation_dict["user_id"],
+                                inserted_data.inserted_primary_key[0],
+                                               session)
 
-    return {
-        "status": "ok",
-        "data": {
-            "inserted_data": new_reservation_dict,
-            "payment_url": payment_url
-        },
-    }
-    # except Exception as e:
-    #     return {
-    #         "status": "error",
-    #         "data": str(e),
-    #     }
+        return {
+            "status": "ok",
+            "data": {
+                "inserted_data": new_reservation_dict,
+                "payment_url": payment_url
+            },
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "data": str(e),
+        }
 
 
 @router.get("/{reservation_id}")
@@ -236,7 +260,9 @@ async def delete_reservation(reservation_id: int, session: AsyncSession = Depend
     Delete a reservation by ID
     """
     try:
-        await get_reservation(reservation_id, session)
+        stmt = delete(payment).where(payment.c.reservation == reservation_id)
+        await session.execute(stmt)
+        await session.commit()
         stmt = delete(reservation).where(reservation.c.id == reservation_id)
         await session.execute(stmt)
         await session.commit()

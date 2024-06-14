@@ -2,11 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select, insert, update, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from backend.src.database import get_async_session
-from backend.src.stations.models import station
-from backend.src.stations.schemas import StationCreate, StationUpdate
-from backend.src.users.models import user
-from backend.src.users.utils import current_verified_user, is_admin, is_staff
+from src.database import get_async_session
+from src.stations.models import station
+from src.stations.schemas import StationCreate, StationUpdate
+from src.users.models import user
+from src.users.utils import current_verified_user, is_admin, is_staff
 
 router = APIRouter(
     prefix="/stations",
@@ -32,6 +32,20 @@ async def create_station(station_create: StationCreate,
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/")
+async def get_all_stations(session: AsyncSession = Depends(get_async_session)):
+    """
+    Get a station by ID
+    """
+    try:
+        query = select(station)
+        result = await session.execute(query)
+        data = result.mappings().all()
+        if not data:
+            raise HTTPException(status_code=404, detail="Station not found")
+        return [dict(d) for d in data]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{station_id}")
 async def get_station(station_id: int,
