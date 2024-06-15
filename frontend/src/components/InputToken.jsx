@@ -11,7 +11,7 @@ const InputToken = () => {
         const {token} = values;
 
         try {
-            const response = await axios.post(UrlAddr + '/users/verify/', {token}, {
+            const response = await axios.post(UrlAddr + '/users/verify', {token}, {
                 headers: {
                     'accept': 'application/json',
                     'Content-Type': 'application/json',

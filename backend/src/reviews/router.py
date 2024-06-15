@@ -41,8 +41,6 @@ async def get_reviews_by_station(station_id: int, session: AsyncSession = Depend
         query = select(review).where(review.c.station_id == station_id)
         result = await session.execute(query)
         data = result.mappings().all()
-        if not data:
-            raise HTTPException(status_code=404, detail="Reviews not found")
         return {
             "status": "ok",
             "data": [dict(d) for d in data],

@@ -68,7 +68,7 @@ async def get_all_reservations(session: AsyncSession = Depends(get_async_session
 async def get_my_reservations(session: AsyncSession = Depends(get_async_session),
                                current_user: user = Depends(current_verified_user)) -> dict:
     """
-    Get all reservations
+    Get my reservations
     """
     try:
         if await is_admin(current_user.id, session) or await is_staff(current_user.id, session):

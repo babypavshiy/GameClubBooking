@@ -60,7 +60,7 @@ const [reservations, setReservations] = useState([]);
 
     const handleLogout = async () => {
         try {
-            await axios.post(UrlAddr + '/users/logout/', {}, {withCredentials: true});
+            await axios.post(UrlAddr + '/users/logout', {}, {withCredentials: true});
             message.success('Вы успешно вышли из системы');
             navigate('/');
         } catch (error) {

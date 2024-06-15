@@ -1,4 +1,4 @@
 
-const UrlAddr = 'http://www.gameclubbooking.ru/api';
+const UrlAddr = 'https://www.gameclubbooking.ru/api';
 
 export default UrlAddr;

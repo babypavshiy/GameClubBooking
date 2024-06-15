@@ -41,8 +41,6 @@ async def get_all_stations(session: AsyncSession = Depends(get_async_session)):
         query = select(station)
         result = await session.execute(query)
         data = result.mappings().all()
-        if not data:
-            raise HTTPException(status_code=404, detail="Station not found")
         return [dict(d) for d in data]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
